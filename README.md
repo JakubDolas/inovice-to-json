@@ -9,7 +9,6 @@ System ML do automatycznego pobierania danych z faktur. System zamienia surowe z
 
 ```bash
 # 1. Pobierz repozytorium
-git clone [https://github.com/JakubDolas/inovice-to-json.git](https://github.com/JakubDolas/inovice-to-json.git)
 cd invoice-to-json
 
 # 2. Zainstaluj zależności
