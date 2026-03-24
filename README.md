@@ -15,6 +15,7 @@ cd invoice-to-json
 pip install -r requirements.txt
 
 # 3. Skonfiguruj klucz API
+# w katalogu backend stwórz plik .env
 # W pliku .env wklej swój klucz:
 # GROQ_API_KEY=twoj_klucz_api_tutaj
 
