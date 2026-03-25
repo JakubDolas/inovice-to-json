@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
 from dotenv import load_dotenv
+from django.http import FileResponse
 
 from .models import Invoice
 from .serializers import InvoiceSerializer
@@ -46,3 +47,40 @@ def process_invoice_api(request):
 
     except Exception as e:
         return Response({"error": f"Błąd serwera: {str(e)}"}, status=500)
+    
+@api_view(['GET'])
+def get_invoices(request):
+    invoices = Invoice.objects.all().order_by('-created_at')
+    serializer = InvoiceSerializer(invoices, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def invoice_detail_api(request, pk):
+    try:
+        invoice = Invoice.objects.get(pk=pk)
+    except Invoice.DoesNotExist:
+        return Response({"error": "Nie znaleziono faktury"})
+    
+    if request.method == 'GET':
+        serializer = InvoiceSerializer(invoice)
+        return Response(serializer.data)
+    
+    elif request.method == 'PUT':
+        serializer = InvoiceSerializer(invoice, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+    elif request.method == 'DELETE':
+        invoice.delete()
+        return Response(status=204)
+    
+@api_view(['GET'])
+def get_invoice_image(request, pk):
+    try:
+        invoice = Invoice.objects.get(pk=pk)
+        if invoice.image_path and os.path.exists(invoice.image_path):
+            return FileResponse(open(invoice.image_path, 'rb'))
+        return Response({"error": "Brak pliku na serwerze"}, status=404)
+    except Invoice.DoesNotExist:
+        return Response({"error": "Nie znaleziono faktury"}, status=404)

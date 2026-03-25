@@ -1,120 +1,145 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import './App.css'
 
+import InvoiceModal from "./components/InvoiceModal"
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [invoices, setInvoices] = useState([])
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
+  
+  const [selectedInvoice, setSelectedInvoice] = useState(null)
+  const [editData, setEditData] = useState({})
+
+  const fetchInvoices = () => {
+    axios.get('http://127.0.0.1:8000/api/invoices/')
+      .then(response => setInvoices(response.data))
+      .catch(error => console.error("Błąd podczas pobierania danych:", error))
+  }
+
+  useEffect(() => {
+    fetchInvoices()
+  }, [])
+
+  const handleFileChange = (event) => setSelectedFile(event.target.files[0])
+
+  const handleUpload = async (event) => {
+    event.preventDefault()
+    if (!selectedFile) {
+      alert("Proszę najpierw wybrać plik faktury!")
+      return
+    }
+    const formData = new FormData()
+    formData.append('invoice_image', selectedFile)
+    setIsUploading(true)
+
+    try {
+      await axios.post('http://127.0.0.1:8000/api/process-invoice/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setSelectedFile(null)
+      fetchInvoices()
+    } catch (error) {
+      console.error("Błąd wysyłania:", error)
+      alert("Wystąpił błąd podczas przetwarzania faktury.")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const openDetails = (invoice) => {
+    setSelectedInvoice(invoice)
+    setEditData(invoice)
+  }
+
+  const closeDetails = () => setSelectedInvoice(null)
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setEditData({ ...editData, [name]: value })
+  }
+
+  const handleSaveChanges = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/invoices/${selectedInvoice.id}/`, editData)
+      fetchInvoices()
+      closeDetails()
+    } catch (error) {
+      console.error("Błąd aktualizacji:", error)
+      alert("Nie udało się zaktualizować faktury.")
+    }
+  }
+
+  const handleDelete = async () => {
+    if (window.confirm("Czy na pewno chcesz usunąć tę fakturę bezpowrotnie?")) {
+      try {
+        await axios.delete(`http://127.0.0.1:8000/api/invoices/${selectedInvoice.id}/`)
+        fetchInvoices()
+        closeDetails()
+      } catch (error) {
+        console.error("Błąd usuwania:", error)
+        alert("Nie udało się usunąć faktury.")
+      }
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="dashboard">
+      <header className="header">
+        <h1>InvoiceLens</h1>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="main-content">
+        <section className="upload-section card">
+          <h2>Wgraj nową fakturę</h2>
+          <form onSubmit={handleUpload} className="upload-form">
+            <input type="file" accept="image/*" onChange={handleFileChange} className="file-input" />
+            <button type="submit" className="upload-btn" disabled={isUploading}>
+              {isUploading ? "Analizowanie..." : "Przetwórz fakturę"}
+            </button>
+          </form>
+        </section>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <section className="invoices-section">
+          <h2>Przetworzone dokumenty</h2>
+          <div className="invoice-grid">
+            {invoices.length === 0 ? (
+              <p className="no-data">Brak faktur w bazie.</p>
+            ) : (
+              invoices.map((invoice) => (
+                <div key={invoice.id} className="invoice-card">
+                  <div className="invoice-header">
+                    <h3>{invoice.invoice_number || "Brak numeru"}</h3>
+                    <span className="badge">Przetworzono</span>
+                  </div>
+                  <div className="invoice-body">
+                    <p><strong>NIP Sprzedawcy:</strong> {invoice.vendor_nip || "Nie wykryto"}</p>
+                    <p><strong>Kwota:</strong> {invoice.total_brutto} PLN</p>
+                  </div>
+                  <div className="invoice-footer">
+                    <button className="details-btn" onClick={() => openDetails(invoice)}>
+                      Podgląd i Edycja
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <InvoiceModal 
+        selectedInvoice={selectedInvoice}
+        editData={editData}
+        onClose={closeDetails}
+        onInputChange={handleInputChange}
+        onSave={handleSaveChanges}
+        onDelete={handleDelete}
+      />
+      
+    </div>
   )
 }
 

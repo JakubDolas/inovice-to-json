@@ -1,6 +1,5 @@
 import requests
 
-# Adres Twojego serwera Django
 URL = "http://127.0.0.1:8000/api/process-invoice/"
 
 IMAGE_PATH = "data/test3.png"
