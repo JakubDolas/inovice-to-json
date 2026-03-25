@@ -7,6 +7,10 @@ System ML do automatycznego pobierania danych z faktur. System zamienia surowe z
 3. **Rozumowanie (Groq API):** Analizuje teskt i wyciąga konkretne dane do formatu JSON.
 4. **Walidacja (QA):** Porównuje wynik z wzorcem i na wylicza skuteczność.
 
+![Lista przetworzonych faktur](https://github.com/JakubDolas/inovice-to-json/blob/main/images/image.png)
+![](https://github.com/JakubDolas/inovice-to-json/blob/main/images/image2.png)
+
+
 ```bash
 # 1. Pobierz repozytorium
 cd invoice-to-json
